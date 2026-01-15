@@ -21,6 +21,7 @@ import com.hypixel.hytale.server.core.util.MessageUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NonNull;
 
+import java.awt.*;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +43,10 @@ public class ShareCommand extends AbstractAsyncCommand {
                 return CompletableFuture.runAsync(() -> {
                     PlayerRef playerRef = ref.getStore().getComponent(ref, PlayerRef.getComponentType());
                     ItemStack stack = player.getInventory().getActiveHotbarItem();
+                    if (stack == null || !stack.isValid()) {
+                        playerRef.sendMessage(Message.raw("You must be holding an item to use this command!").color(Color.RED));
+                        return;
+                    }
                     int quantity = stack.getQuantity();
                     String message = "Sharing [%dx %s]".formatted(quantity, I18nModule.get().getMessage(playerRef.getLanguage(), stack.getItem().getTranslationKey()));
                     //TODO: Following is copy pasted from GamePacketHandler. Use that instead?
