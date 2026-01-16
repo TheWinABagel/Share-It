@@ -3,8 +3,6 @@ plugins {
     id("hytale-mod") version "0.+"
 }
 
-group = "com.bagel"
-version = "1.0.0"
 val javaVersion = 25
 
 repositories {
@@ -34,9 +32,9 @@ java {
 tasks.named<ProcessResources>("processResources") {
     var replaceProperties = mapOf(
         "plugin_group" to findProperty("plugin_group"),
-        "plugin_maven_group" to project.group,
+        "plugin_maven_group" to findProperty("maven_group"),
         "plugin_name" to findProperty("plugin_name"),
-        "plugin_version" to project.version,
+        "plugin_version" to findProperty("plugin_version"),
         "server_version" to findProperty("server_version"),
 
         "plugin_description" to findProperty("plugin_description"),

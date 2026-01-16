@@ -1,4 +1,4 @@
 @NullMarked
-package com.bagel;
+package dev.bagel;
 
 import org.jspecify.annotations.NullMarked;
