@@ -2,7 +2,7 @@ plugins {
     `maven-publish`
     id("hytale-mod") version "0.+"
 }
-
+project.version = project.property("plugin_version") as String
 val javaVersion = 25
 
 repositories {
