@@ -53,7 +53,7 @@ public class ShareCommand extends AbstractAsyncCommand {
                         playerRef.sendMessage(NO_ITEM.color(Color.RED));
                         return;
                     }
-                    int quantity = stack.getQuantity();
+                    int quantity = player.getInventory().getCombinedHotbarUtilityConsumableStorage().countItemStacks(newStack -> newStack != null && newStack.isValid() && newStack.getItemId().equals(stack.getItemId()));
                     com.hypixel.hytale.protocol.Color color = ItemQuality.getAssetMap().getAsset(stack.getItem().getQualityIndex()).getTextColor();
                     String itemName = I18nModule.get().getMessage(playerRef.getLanguage(), stack.getItem().getTranslationKey());
                     String message = " shared [%dx %s]".formatted(quantity, itemName);
