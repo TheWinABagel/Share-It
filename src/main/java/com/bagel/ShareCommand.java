@@ -5,6 +5,8 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.type.item.config.ItemQuality;
+import com.hypixel.hytale.server.core.asset.util.ColorParseUtil;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
@@ -18,6 +20,7 @@ import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.MessageUtil;
+import it.unimi.dsi.fastutil.Function;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NonNull;
 
@@ -25,9 +28,12 @@ import java.awt.*;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 
 public class ShareCommand extends AbstractAsyncCommand {
+    private static Message NO_ITEM = Message.translation("shareit.error.no_item");
+
     public ShareCommand() {
         super("share", "Share your held item to chat");
     }
@@ -44,11 +50,19 @@ public class ShareCommand extends AbstractAsyncCommand {
                     PlayerRef playerRef = ref.getStore().getComponent(ref, PlayerRef.getComponentType());
                     ItemStack stack = player.getInventory().getActiveHotbarItem();
                     if (stack == null || !stack.isValid()) {
-                        playerRef.sendMessage(Message.raw("You must be holding an item to use this command!").color(Color.RED));
+                        playerRef.sendMessage(NO_ITEM.color(Color.RED));
                         return;
                     }
                     int quantity = stack.getQuantity();
-                    String message = "Sharing [%dx %s]".formatted(quantity, I18nModule.get().getMessage(playerRef.getLanguage(), stack.getItem().getTranslationKey()));
+                    com.hypixel.hytale.protocol.Color color = ItemQuality.getAssetMap().getAsset(stack.getItem().getQualityIndex()).getTextColor();
+                    String itemName = I18nModule.get().getMessage(playerRef.getLanguage(), stack.getItem().getTranslationKey());
+                    String message = " shared [%dx %s]".formatted(quantity, itemName);
+                    Message msgNew = Message.translation("shareit.info.share_item")
+                            .param("player", playerRef.getUsername())
+                            .insert(Message.raw(" ["))
+                            .insert(Message.raw(quantity + "x ").bold(true))
+                            .insert(Message.raw(itemName).color(ColorParseUtil.colorToHexString(color)).bold(true))
+                            .insert(Message.raw("]"));
                     //TODO: Following is copy pasted from GamePacketHandler. Use that instead?
                     UUID playerUUID = playerRef.getUuid();
                     List<PlayerRef> targetPlayerRefs = new ObjectArrayList<>(Universe.get().getPlayers());
@@ -65,11 +79,10 @@ public class ShareCommand extends AbstractAsyncCommand {
                                                     .withCause(throwable)
                                                     .log("An error occurred while dispatching PlayerChatEvent for player %s", playerRef.getUsername());
                                         } else if (!playerChatEvent.isCancelled()) {
-                                            Message sentMessage = playerChatEvent.getFormatter().format(playerRef, playerChatEvent.getContent());
-                                            HytaleLogger.getLogger().at(Level.INFO).log(MessageUtil.toAnsiString(sentMessage).toAnsi(ConsoleModule.get().getTerminal()));
+                                            HytaleLogger.getLogger().at(Level.INFO).log(MessageUtil.toAnsiString(msgNew).toAnsi(ConsoleModule.get().getTerminal()));
 
                                             for (PlayerRef targetPlayerRef : playerChatEvent.getTargets()) {
-                                                targetPlayerRef.sendMessage(sentMessage);
+                                                targetPlayerRef.sendMessage(msgNew);
                                             }
                                         }
                                     }
